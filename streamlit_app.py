@@ -4,7 +4,9 @@ from streamlit_gsheets import GSheetsConnection
 # 1. PAGE CONFIG
 st.set_page_config(page_title="Biriba Tracker", layout="centered")
 
-# 2. CSS - CENTERED & HIDE "PRESS ENTER"
+WINNING_SCORE = 3510
+
+# 2. CSS
 st.markdown("""
     <style>
     .block-container {
@@ -48,12 +50,6 @@ st.markdown("""
     input {
         text-align: center;
     }
-    input::placeholder {
-        color: transparent !important;
-    }
-    input::-webkit-input-placeholder {
-        color: transparent !important;
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -63,7 +59,7 @@ try:
     df = conn.read(worksheet="Sheet1", ttl="0") 
     series_dad = int(df.iloc[0]["Dad"])
     series_mom = int(df.iloc[0]["Mom"])
-except Exception as e:
+except Exception:
     series_dad, series_mom = 20, 6
 
 # 4. HEADER
@@ -81,7 +77,21 @@ if 'scores' not in st.session_state:
     st.session_state.history = []
     st.session_state.first_dealer = None
 
-# 6. APP CONTENT
+# 6. WINNER LOGIC
+dad_total = st.session_state.scores["Dad"]
+mom_total = st.session_state.scores["Mom"]
+
+if dad_total >= WINNING_SCORE or mom_total >= WINNING_SCORE:
+    if dad_total > mom_total:
+        st.balloons()
+        st.success(f"🏆 Νικητής ο Μπαμπάς με {dad_total}!")
+    elif mom_total > dad_total:
+        st.balloons()
+        st.success(f"🏆 Νικήτρια η Μαμά με {mom_total}!")
+    else:
+        st.info("Ισοπαλία πάνω από το όριο! Παίξτε άλλον έναν γύρο.")
+
+# 7. APP CONTENT
 round_num = len(st.session_state.history) + 1
 
 if st.session_state.first_dealer is None:
@@ -115,7 +125,7 @@ else:
             })
             st.rerun()
 
-# 7. TABLE & RESET
+# 8. TABLE & RESET
 if st.session_state.history:
     st.table(st.session_state.history)
 
