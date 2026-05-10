@@ -91,7 +91,7 @@ else:
 # 6. TABLE & RESET
 if st.session_state.history:
     st.write("**Accumulated Scores**")
-    st.table(st.session_state.history[::-1][:5])
+    st.table(st.session_state.history)
 
 if st.button("Reset Match"):
     st.session_state.scores = {"Dad": 0, "Mom": 0}
