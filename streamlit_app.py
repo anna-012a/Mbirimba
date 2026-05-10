@@ -77,19 +77,49 @@ if 'scores' not in st.session_state:
     st.session_state.history = []
     st.session_state.first_dealer = None
 
-# 6. WINNER LOGIC
+# 6. WINNER LOGIC & DATABASE UPDATE
 dad_total = st.session_state.scores["Dad"]
 mom_total = st.session_state.scores["Mom"]
 
 if dad_total >= WINNING_SCORE or mom_total >= WINNING_SCORE:
+    winner_name = None
     if dad_total > mom_total:
+        winner_name = "Dad"
         st.balloons()
         st.success(f"🏆 Νικητής ο Μπαμπάς με {dad_total}!")
     elif mom_total > dad_total:
+        winner_name = "Mom"
         st.balloons()
         st.success(f"🏆 Νικήτρια η Μαμά με {mom_total}!")
-    else:
-        st.info("Ισοπαλία πάνω από το όριο! Παίξτε άλλον έναν γύρο.")
+    
+    # Show a button to record the win in Google Sheets
+    if winner_name:
+        if st.button(f"Καταγραφή Νίκης για {winner_name}", use_container_width=True):
+            try:
+                # 1. Update the local variables
+                if winner_name == "Dad":
+                    new_dad = series_dad + 1
+                    new_mom = series_mom
+                else:
+                    new_dad = series_dad
+                    new_mom = series_mom + 1
+                
+                # 2. Create the data to upload
+                # Ensure headers 'Dad' and 'Mom' match your sheet exactly
+                update_df = [{"Dad": new_dad, "Mom": new_mom}]
+                
+                # 3. Push to Google Sheets
+                conn.update(worksheet="Sheet1", data=update_df)
+                
+                # 4. Reset game state for next time
+                st.session_state.scores = {"Dad": 0, "Mom": 0}
+                st.session_state.history = []
+                st.session_state.first_dealer = None
+                
+                st.toast("Το σκορ ενημερώθηκε στο Google Sheets!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error updating sheet: {e}")
 
 # 7. APP CONTENT
 round_num = len(st.session_state.history) + 1
