@@ -6,61 +6,19 @@ st.set_page_config(page_title="Biriba Tracker", layout="centered")
 
 WINNING_SCORE = 3510
 
-# 2. CSS
-st.markdown("""
-    <style>
-    .block-container {
-        padding-top: 0rem !important;
-        padding-bottom: 0rem !important;
-        max-width: 100% !important;
-        text-align: center;
-    }
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
-    
-    .scoreboard {
-        text-align: center;
-        font-size: 24px;
-        font-weight: bold;
-        background-color: #1E1E1E;
-        padding: 15px 5px;
-        border-radius: 0px 0px 15px 15px;
-        border: 2px solid #4CAF50;
-        margin-bottom: 15px;
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        color: white;
-    }
+# 2. DATABASE LOAD
+# We define the connection once at the top level
+conn = st.connection("gsheets", type=GSheetsConnection)
 
-    [data-testid="stTable"] {
-        margin-left: auto;
-        margin-right: auto;
-    }
-    th, td {
-        text-align: center !important;
-    }
-
-    [data-testid="stWidgetLabel"] {
-        text-align: center;
-        display: block;
-        width: 100%;
-    }
-    
-    input {
-        text-align: center;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# 3. DATABASE LOAD
 try:
-    conn = st.connection("gsheets", type=GSheetsConnection)
+    # Explicitly use the connection to read
+    # If this fails, it falls back to defaults
     df = conn.read(worksheet="Sheet1", ttl="0") 
     series_dad = int(df.iloc[0]["Dad"])
     series_mom = int(df.iloc[0]["Mom"])
 except Exception:
     series_dad, series_mom = 20, 6
+
 
 # 4. HEADER
 st.markdown(f"""
