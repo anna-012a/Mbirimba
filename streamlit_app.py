@@ -1,5 +1,5 @@
 import streamlit as st
-from streamlit_gsheets import GSheetsConnection
+import gspread
 import pandas as pd
 
 # 1. PAGE CONFIGURATION
@@ -21,13 +21,13 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. DIRECT DICTIONARY CONFIGURATION (Bypasses JSON Decoding Errors)
+# 3. DIRECT CONNECTION (Using standard gspread)
 
 # ⚠️ PASTE YOUR GOOGLE SHEET LINK HERE
 SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/19nkWxBzNomYeP0Ls5pNMYT7ET5k05_lJagPC-fUDk1U/edit?gid=0#gid=0"
 
 # ⚠️ FILL THESE VARIABLES WITH DATA FROM YOUR DOWNLOADED GOOGLE KEY FILE
-creds_dict = {
+creds_dict ={
   "type": "service_account",
   "project_id": "mbirimba",
   "private_key_id": "4943c38d240f456c1263731fc31a9e746bf08bb4",
@@ -42,18 +42,15 @@ creds_dict = {
 }
 
 try:
-    # Explicitly establish connection feeding parameters directly
-    conn = st.connection(
-        "gsheets",
-        type=GSheetsConnection,
-        spreadsheet=SPREADSHEET_URL,
-        service_account=creds_dict
-    )
+    # Authorize and open worksheet directly via URL
+    gc = gspread.service_account_from_dict(creds_dict)
+    sh = gc.open_by_url(SPREADSHEET_URL)
+    worksheet = sh.get_worksheet(0) # Grabs the very first tab
     
-    # Read the data matrix row
-    df = conn.read(ttl=0) 
-    series_dad = int(df.iloc[0]["Dad"])
-    series_mom = int(df.iloc[0]["Mom"])
+    # Read values safely
+    records = worksheet.get_all_records()
+    series_dad = int(records[0]["Dad"])
+    series_mom = int(records[0]["Mom"])
 except Exception as e:
     st.error(f"Database Error: {e}")
     series_dad, series_mom = 20, 6
@@ -85,7 +82,10 @@ if dad_total >= WINNING_SCORE or mom_total >= WINNING_SCORE:
             new_dad = series_dad + 1 if winner == "Dad" else series_dad
             new_mom = series_mom + 1 if winner == "Mom" else series_mom
             
-            conn.update(data=pd.DataFrame([{"Dad": new_dad, "Mom": new_mom}]))
+            # Update values in cells A2 and B2 directly
+            worksheet.update_acell('A2', new_dad)
+            worksheet.update_acell('B2', new_mom)
+            
             st.session_state.scores, st.session_state.history, st.session_state.first_dealer = {"Dad": 0, "Mom": 0}, [], None
             st.rerun()
         except Exception as e:
