@@ -1,6 +1,7 @@
 import streamlit as st
 import gspread
 import pandas as pd
+import os
 
 # 1. PAGE CONFIGURATION
 st.set_page_config(page_title="Biriba Tracker", layout="centered")
@@ -21,33 +22,19 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. DIRECT CONNECTION (Using standard gspread)
-
-# ⚠️ PASTE YOUR GOOGLE SHEET LINK HERE
+# 3. DIRECT CONNECTION VIA LOCAL REPO JSON FILE
 SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/19nkWxBzNomYeP0Ls5pNMYT7ET5k05_lJagPC-fUDk1U/edit?gid=0#gid=0"
 
-# ⚠️ FILL THESE VARIABLES WITH DATA FROM YOUR DOWNLOADED GOOGLE KEY FILE
-creds_dict ={
-  "type": "service_account",
-  "project_id": "mbirimba",
-  "private_key_id": "4943c38d240f456c1263731fc31a9e746bf08bb4",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDDZ4IasoMwi7aD\n6ExtmmAVKNSKZK0Uk2ApgkJblxpOeyBSTiAosfh0AKEdDPRrbRM0YKDJ26AjL+uV\nDNb1N7Zja2V7guRSWO6h6djHp9Rrxz1pIQxOcs2ruK41Bm1xqwlv7Y+1udmfFFF6\nM+ZH+0Jnbi96pp9xOwMzwiH9vudLAwS2X0QJKsmPw774MGwY3QnNC2zE4GC06ll+\nSvCaKcnfC6340zstSRdcbnLpGd1lRKRfTOYoAMqP8gpPQ+TfHkpsLXO1iqab0JWq\nWajEJtbtNpwqXqr+1LTd+Yfw0cC0mmQDxQ/JdZ4BbFtKjkJU586TCxEY61ET2xNJ\nIel15oDNAgMBAAECggEACo6LCY+KED4GwaBJO2/9r5Ghz0rvzDlyFowCXcRkwsda\n0FeG2+v8NPgxEXVjtxy7eYxG44ues91LkvqQmnWaFaD1vfMtDAM1++q7BX5cYZOa\nuRVJ/usA5ZLNW/FZnwHTOV188sp0UWiIRlvgyGlwsE8potdhrH0NspF9w0xkXo8B\nAnYuHXMkh5XmKXKDxIWDIaPh6/YGVIoWzfEMCbtKCw5lJqOXufpZn5fUXG0ulX6T\n7yRXM/dDG1QVagJeAg2Hg8j/P0hTxkJTeAUJXNF0ao23EmyU5VpSr1X1lPUjma3M\noHF/NZ8wDtrD7yXEQkBgiXUE4WFINB5/sMxDcGfl2QKBgQDmsXnURJ5uwy3b05ML\nH25S00vR/Kh8EwSSLpLLzEoU5BHdC5Ud9EXlPYj1/SrYbVp608Uq88x2LvqenxBk\nydq/drMsYgs7BN75Iq1D1ifL9jb8198yJleqMp3WSwea5RM31SkkWunyEI72bBiK\n18VK6Y7qIjUaTP5FUpKgdCDiRwKBgQDY1wS54XmOtUXj9iXAGRreXpwcjYMpzzmm\nJXUABKGv/ZhinUUsY54MhwD3Yk1frv9pk80Rm5BRTKK5eraC/jVnGRwphGe5lgVM\nJwpWC7nVBsBDlYYHSW8DIFh+lXH+kDv0otCUx8lkpbTxn+pcJR7Xl+xj0FTUAZ40\nQAXL3+8aSwKBgD2KfNCWmZk8siAheemOsfSgb2qONzgaLq78g6agUebuzKEmNNpv\nzrGPz9ind+WSjn+TvNZvgUzJzYvBLTNl8df/x16ArTRKYV0e1g/xsl4jyZl70Qvk\n1KAPrrF7BIVatNzBHZ+YLS6pIio0vftUAkqwsbJd+8KPZYmCtKDfOeKDAoGBAMdh\nTfMso3zYqR7m4ec0LkRxcdG/PO9gn31py57so08TOt7SBRy/rD+Qkw7k0Ig+fJMz\nV8fs5lIayTUK5G6mF6xopkB2gnlevBg9fX+I4KJDxt1dyxNALlcNktEx0NNlA/v5\nCRkEauWkiC/z/qYja6yJAM72bElUA4e/ppTDnzLpAoGAPTTHz4rMeZW07OdIyktE\n9CM2sGqVjajo0VSApQgjwXnIhaSysuO5+cQLb0BUO1nl0J7ZHOhm2TB5W9iC3Amh\n07ZHSMxo4ioNLhBvhnPwU+sbpWmLQ2I6OugBbP9x+5FMyLjnMxeFbLivjCk6+Yzk\nnivRVGSLdAjtZSIZdi3h3uo=\n-----END PRIVATE KEY-----\n",
-  "client_email": "mbirimba@mbirimba.iam.gserviceaccount.com",
-  "client_id": "107382769538143264557",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/mbirimba%40mbirimba.iam.gserviceaccount.com",
-  "universe_domain": "googleapis.com"
-}
-
 try:
-    # Authorize and open worksheet directly via URL
-    gc = gspread.service_account_from_dict(creds_dict)
-    sh = gc.open_by_url(SPREADSHEET_URL)
-    worksheet = sh.get_worksheet(0) # Grabs the very first tab
+    # Point directly to the file you uploaded to GitHub
+    creds_path = os.path.join(os.path.dirname(__file__), "google_creds.json")
     
-    # Read values safely
+    # Authorize using the clean filename path directly
+    gc = gspread.service_account(filename=creds_path)
+    sh = gc.open_by_url(SPREADSHEET_URL)
+    worksheet = sh.get_worksheet(0) 
+    
+    # Read the series baseline values
     records = worksheet.get_all_records()
     series_dad = int(records[0]["Dad"])
     series_mom = int(records[0]["Mom"])
@@ -82,7 +69,7 @@ if dad_total >= WINNING_SCORE or mom_total >= WINNING_SCORE:
             new_dad = series_dad + 1 if winner == "Dad" else series_dad
             new_mom = series_mom + 1 if winner == "Mom" else series_mom
             
-            # Update values in cells A2 and B2 directly
+            # Map values back into cells A2 and B2 seamlessly
             worksheet.update_acell('A2', new_dad)
             worksheet.update_acell('B2', new_mom)
             
