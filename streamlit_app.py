@@ -2,6 +2,7 @@ import streamlit as st
 import gspread
 import pandas as pd
 import os
+import json
 
 # 1. PAGE CONFIGURATION
 st.set_page_config(page_title="Biriba Tracker", layout="centered")
@@ -22,19 +23,24 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. DIRECT CONNECTION VIA LOCAL REPO JSON FILE
+# 3. DIRECT CONNECTION VIA LOCAL REPO JSON FILE WITH TEXT CLEANER
 SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/19nkWxBzNomYeP0Ls5pNMYT7ET5k05_lJagPC-fUDk1U/edit?gid=0#gid=0"
 
 try:
-    # Point directly to the file you uploaded to GitHub
+    # 1. Open the file you uploaded to GitHub
     creds_path = os.path.join(os.path.dirname(__file__), "google_creds.json")
+    with open(creds_path) as f:
+        creds_dict = json.load(f)
     
-    # Authorize using the clean filename path directly
-    gc = gspread.service_account(filename=creds_path)
+    # 2. THE CHOSEN FIX: Convert literal \n text into actual raw system line breaks
+    creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+    
+    # 3. Authenticate with the cleaned dictionary data matrix
+    gc = gspread.service_account_from_dict(creds_dict)
     sh = gc.open_by_url(SPREADSHEET_URL)
     worksheet = sh.get_worksheet(0) 
     
-    # Read the series baseline values
+    # 4. Read baseline numbers
     records = worksheet.get_all_records()
     series_dad = int(records[0]["Dad"])
     series_mom = int(records[0]["Mom"])
@@ -69,7 +75,7 @@ if dad_total >= WINNING_SCORE or mom_total >= WINNING_SCORE:
             new_dad = series_dad + 1 if winner == "Dad" else series_dad
             new_mom = series_mom + 1 if winner == "Mom" else series_mom
             
-            # Map values back into cells A2 and B2 seamlessly
+            # Write safely using coordinates
             worksheet.update_acell('A2', new_dad)
             worksheet.update_acell('B2', new_mom)
             
