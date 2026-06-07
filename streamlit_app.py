@@ -1,7 +1,6 @@
 import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
-import json
 
 # 1. PAGE CONFIGURATION
 st.set_page_config(page_title="Biriba Tracker", layout="centered")
@@ -22,15 +21,13 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. DIRECT HARDCODED CONNECTION SETUP
-# This completely bypasses Streamlit's dashboard secrets panel.
+# 3. DIRECT DICTIONARY CONFIGURATION (Bypasses JSON Decoding Errors)
 
-# Paste your full Google Sheet browser URL here
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/YOUR_ACTUAL_SPREADSHEET_ID_HERE/edit"
+# ⚠️ PASTE YOUR GOOGLE SHEET LINK HERE
+SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/19nkWxBzNomYeP0Ls5pNMYT7ET5k05_lJagPC-fUDk1U/edit?gid=0#gid=0"
 
-# Paste your entire original service account JSON block inside the triple quotes below
-SERVICE_ACCOUNT_JSON = '''
-{
+# ⚠️ FILL THESE VARIABLES WITH DATA FROM YOUR DOWNLOADED GOOGLE KEY FILE
+creds_dict = {
   "type": "service_account",
   "project_id": "mbirimba",
   "private_key_id": "4943c38d240f456c1263731fc31a9e746bf08bb4",
@@ -43,21 +40,17 @@ SERVICE_ACCOUNT_JSON = '''
   "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/mbirimba%40mbirimba.iam.gserviceaccount.com",
   "universe_domain": "googleapis.com"
 }
-'''
 
 try:
-    # Convert the text string into a native Python dictionary
-    creds_dict = json.loads(SERVICE_ACCOUNT_JSON)
-    
-    # Establish a manual connection explicitly feeding the credentials
+    # Explicitly establish connection feeding parameters directly
     conn = st.connection(
         "gsheets",
         type=GSheetsConnection,
-        spreadsheet="https://docs.google.com/spreadsheets/d/19nkWxBzNomYeP0Ls5pNMYT7ET5k05_lJagPC-fUDk1U/edit?gid=0#gid=0",
+        spreadsheet=SPREADSHEET_URL,
         service_account=creds_dict
     )
     
-    # Read current match numbers
+    # Read the data matrix row
     df = conn.read(ttl=0) 
     series_dad = int(df.iloc[0]["Dad"])
     series_mom = int(df.iloc[0]["Mom"])
@@ -92,9 +85,7 @@ if dad_total >= WINNING_SCORE or mom_total >= WINNING_SCORE:
             new_dad = series_dad + 1 if winner == "Dad" else series_dad
             new_mom = series_mom + 1 if winner == "Mom" else series_mom
             
-            # Save the updated matrix using the explicit connection instance
             conn.update(data=pd.DataFrame([{"Dad": new_dad, "Mom": new_mom}]))
-            
             st.session_state.scores, st.session_state.history, st.session_state.first_dealer = {"Dad": 0, "Mom": 0}, [], None
             st.rerun()
         except Exception as e:
