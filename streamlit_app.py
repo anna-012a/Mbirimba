@@ -1,7 +1,5 @@
 import streamlit as st
 import gspread
-import pandas as pd
-import os
 import json
 
 # 1. PAGE CONFIGURATION
@@ -23,29 +21,29 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. DIRECT CONNECTION VIA LOCAL REPO JSON FILE WITH TEXT CLEANER
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/19nkWxBzNomYeP0Ls5pNMYT7ET5k05_lJagPC-fUDk1U/edit?gid=0#gid=0"
+# 3. SECURE DATABASE CONNECTION
+SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/19nkWxBzNomYeP0Ls5pNMYT7ET5k05_lJagPC-fUDk1U/edit?gid=0"
 
 try:
-    # 1. Open the file you uploaded to GitHub
-    creds_path = os.path.join(os.path.dirname(__file__), "google_creds.json")
-    with open(creds_path) as f:
-        creds_dict = json.load(f)
+    # Safely load the credentials string directly from Streamlit's secure vault
+    raw_creds = st.secrets["my_creds"]
+    creds_dict = json.loads(raw_creds)
     
-    # 2. THE CHOSEN FIX: Convert literal \n text into actual raw system line breaks
-    creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+    # Force fix any line break anomalies safely inside memory
+    if "private_key" in creds_dict:
+        creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
     
-    # 3. Authenticate with the cleaned dictionary data matrix
+    # Authenticate via gspread using the fresh credentials dict
     gc = gspread.service_account_from_dict(creds_dict)
     sh = gc.open_by_url(SPREADSHEET_URL)
     worksheet = sh.get_worksheet(0) 
     
-    # 4. Read baseline numbers
+    # Read series statistics
     records = worksheet.get_all_records()
     series_dad = int(records[0]["Dad"])
     series_mom = int(records[0]["Mom"])
 except Exception as e:
-    st.error(f"Database Error: {e}")
+    st.error(f"Database Connection Error: {e}")
     series_dad, series_mom = 20, 6
 
 # 4. HEADER
@@ -75,7 +73,7 @@ if dad_total >= WINNING_SCORE or mom_total >= WINNING_SCORE:
             new_dad = series_dad + 1 if winner == "Dad" else series_dad
             new_mom = series_mom + 1 if winner == "Mom" else series_mom
             
-            # Write safely using coordinates
+            # Commit directly to spreadsheet structure coordinates
             worksheet.update_acell('A2', new_dad)
             worksheet.update_acell('B2', new_mom)
             
