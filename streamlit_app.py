@@ -22,7 +22,8 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # 3. SECURE DATABASE CONNECTION
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/19nkwXBzNomYeP0Ls5pNMYT7ET5k05_lJagPC-fUDk1U/edit?gid=0"
+# We isolate the clean Spreadsheet ID directly to bypass URL routing bugs
+SPREADSHEET_ID = "19nkwXBzNomYeP0Ls5pNMYT7ET5k05_lJagPC-fUDk1U"
 
 try:
     # Safely load credentials string directly from Streamlit's secure vault
@@ -35,11 +36,12 @@ try:
     
     # Authenticate via gspread
     gc = gspread.service_account_from_dict(creds_dict)
-    sh = gc.open_by_url(SPREADSHEET_URL)
+    
+    # Open by Key directly instead of URL to avoid 404 response errors
+    sh = gc.open_by_key(SPREADSHEET_ID)
     worksheet = sh.get_worksheet(0) 
     
-    # FIX: Read the series baseline values directly from coordinates A2 and B2
-    # This ignores any duplicate/empty headers elsewhere on the sheet!
+    # Read the series baseline values directly from coordinates A2 and B2
     series_dad = int(worksheet.acell('A2').value or 0)
     series_mom = int(worksheet.acell('B2').value or 0)
 except Exception as e:
