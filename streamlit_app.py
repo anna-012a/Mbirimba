@@ -22,10 +22,10 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # 3. SECURE DATABASE CONNECTION
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/19nkWxBzNomYeP0Ls5pNMYT7ET5k05_lJagPC-fUDk1U/edit?gid=0"
+SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/19nkwXBzNomYeP0Ls5pNMYT7ET5k05_lJagPC-fUDk1U/edit?gid=0"
 
 try:
-    # Safely load the credentials string directly from Streamlit's secure vault
+    # Safely load credentials string directly from Streamlit's secure vault
     raw_creds = st.secrets["my_creds"]
     creds_dict = json.loads(raw_creds)
     
@@ -33,15 +33,15 @@ try:
     if "private_key" in creds_dict:
         creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
     
-    # Authenticate via gspread using the fresh credentials dict
+    # Authenticate via gspread
     gc = gspread.service_account_from_dict(creds_dict)
     sh = gc.open_by_url(SPREADSHEET_URL)
     worksheet = sh.get_worksheet(0) 
     
-    # Read series statistics
-    records = worksheet.get_all_records()
-    series_dad = int(records[0]["Dad"])
-    series_mom = int(records[0]["Mom"])
+    # FIX: Read the series baseline values directly from coordinates A2 and B2
+    # This ignores any duplicate/empty headers elsewhere on the sheet!
+    series_dad = int(worksheet.acell('A2').value or 0)
+    series_mom = int(worksheet.acell('B2').value or 0)
 except Exception as e:
     st.error(f"Database Connection Error: {e}")
     series_dad, series_mom = 20, 6
