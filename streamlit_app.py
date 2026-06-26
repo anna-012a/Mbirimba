@@ -23,7 +23,7 @@ st.markdown("""
 
 # 3. SECURE DATABASE CONNECTION
 # We isolate the clean Spreadsheet ID directly to bypass URL routing bugs
-SPREADSHEET_ID = "19nkwXBzNomYeP0Ls5pNMYT7ET5k05_lJagPC-fUDk1U"
+SPREADSHEET_ID = "19nkWxBzNomYeP0Ls5pNMYT7ET5k05_lJagPC-fUDk1U"
 
 try:
     # Safely load credentials string directly from Streamlit's secure vault
